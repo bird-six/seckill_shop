@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>购买结果 - 限时秒杀专场</title>
+  {% load static %}
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <!-- 复用Tailwind配置 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#e63946',
+            secondary: '#ffb703',
+            dark: '#1d3557',
+            light: '#f1faee',
+            accent: '#457b9d'
+          },
+          fontFamily: {
+            inter: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+</head>
+<body class="font-inter bg-gray-50 min-h-screen">
+  <!-- 顶部导航 -->
+  <header class="sticky top-0 z-50 bg-white shadow-md">
+    <div class="container mx-auto px-4">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center">
+          <a href="{% url 'index' %}" class="text-primary font-bold text-2xl flex items-center">
+            <span>限时秒杀专场</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+  
+  <!-- 结果展示区 -->
+  <main class="container mx-auto px-4 py-16">
+    <div class="max-w-md mx-auto bg-white rounded-xl shadow-lg p-8">
+      <div class="text-center mb-6">
+        {% if code == 200 %}
+          <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="fa fa-check text-green-500 text-2xl"></i>
+          </div>
+        {% else %}
+          <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="fa fa-times text-red-500 text-2xl"></i>
+          </div>
+        {% endif %}
+        
+        <h2 class="text-2xl font-bold mb-2 {% if code == 200 %}text-green-600{% else %}text-red-600{% endif %}">
+          {{ msg }}
+        </h2>
+        
+        {% if order_id %}
+          <p class="text-gray-600 mb-6">订单编号: <span class="font-medium">{{ order_id }}</span></p>
+          <p class="text-gray-500 text-sm mb-6">
+            我们已收到您的订单，正在处理中<br>
+            您可以在订单中心查看进度
+          </p>
+        {% endif %}
+      </div>
+      
+      <div class="flex flex-col gap-3">
+        <a href="{% url 'index' %}" class="w-full bg-primary hover:bg-red-600 text-white py-3 rounded-lg transition-colors text-center font-medium">
+          返回首页
+        </a>
+        {% if code == 200 %}
+          <a href="{% url 'order_list' %}" class="w-full border border-primary text-primary hover:bg-primary/5 py-3 rounded-lg transition-colors text-center font-medium">
+            查看订单
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </main>
+</body>
+</html>

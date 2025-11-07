@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>我的订单 - 限时秒杀专场</title>
+  {% load static %}
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <!-- 配置Tailwind自定义主题 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#e63946',
+            secondary: '#ffb703',
+            dark: '#1d3557',
+            light: '#f1faee',
+            accent: '#457b9d'
+          },
+          fontFamily: {
+            inter: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .order-card {
+        transition: all 0.3s ease;
+      }
+      .order-card:hover {
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      }
+      .status-badge {
+        @apply inline-block px-2 py-1 rounded-full text-xs font-medium;
+      }
+    }
+  </style>
+</head>
+<body class="font-inter bg-gray-50 text-dark">
+  <!-- 顶部导航 -->
+  <header class="sticky top-0 z-50 bg-white shadow-md transition-all duration-300">
+    <div class="container mx-auto px-4">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center">
+          <a href="{% url 'index' %}" class="text-primary font-bold text-2xl flex items-center">
+            <span>限时秒杀专场</span>
+          </a>
+        </div>
+          
+        
+        <!-- 用户功能区 -->
+        <div class="flex items-center space-x-4">
+          <a href="{% url 'order_list' %}" class="text-primary hover:text-primary/80 transition-colors">
+            <i class="fa fa-file-text-o text-lg"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+  
+  <!-- 主内容区 -->
+  <main class="container mx-auto px-4 py-8">
+    <div class="mb-8">
+      <h1 class="text-[clamp(1.5rem,3vw,2rem)] font-bold mb-2">我的订单</h1>
+      <p class="text-gray-600">用户标识: {{ user_id }}</p>
+    </div>
+    
+    <!-- 订单列表 -->
+    {% if orders_with_time_info %}
+      <div class="space-y-6">
+        {% for order_info in orders_with_time_info %}
+          {% with order=order_info.order %}
+          <div class="bg-white rounded-xl shadow-md overflow-hidden order-card">
+            <!-- 订单头部 -->
+            <div class="p-4 border-b border-gray-100 flex justify-between items-center">
+              <div>
+                <span class="text-gray-500 text-sm">订单号: {{ order.id }}</span>
+                <span class="text-gray-400 mx-2">|</span>
+                <span class="text-gray-500 text-sm">{{ order.create_time|date:'Y-m-d H:i:s' }}</span>
+              </div>
+              <div>
+                {% if order.status == 0 %}
+                  <span class="status-badge bg-yellow-100 text-yellow-800">{{ order_status_map.0 }}
+                    {% if order_info.remaining_time %}
+                      <span class="ml-2 text-red-500">
+                        (<span class="countdown-timer" data-seconds="{{ order_info.remaining_time }}">计算中...</span>)
+                      </span>
+                    {% else %}
+                      <span class="ml-2 text-red-500">(已超时)</span>
+                    {% endif %}
+                  </span>
+                {% elif order.status == 1 %}
+                  <span class="status-badge bg-green-100 text-green-800">{{ order_status_map.1 }}</span>
+                {% elif order.status == 2 %}
+                  <span class="status-badge bg-gray-100 text-gray-800">{{ order_status_map.2 }}</span>
+                {% elif order.status == 3 %}
+                  <span class="status-badge bg-blue-100 text-blue-800">{{ order_status_map.3 }}</span>
+                {% endif %}
+              </div>
+            </div>
+            
+            <!-- 订单内容 -->
+            <div class="p-4">
+              <div class="flex flex-col md:flex-row items-start md:items-center gap-4">
+                <!-- 商品图片 -->
+                <div class="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                  <img src="/static/product_img/扫地机器人.webp" alt="{{ order.goods_name }}" class="w-full h-full object-cover">
+                </div>
+                
+                <!-- 商品信息 -->
+                <div class="flex-1">
+                  <h3 class="font-medium text-gray-900 mb-1">{{ order.goods_name }}</h3>
+                  <div class="flex justify-between items-center">
+                    <div>
+                      <span class="text-primary font-bold text-lg">¥{{ order.seckill_price }}</span>
+                      <span class="text-gray-400 text-sm ml-2">×{{ order.quantity }}</span>
+                    </div>
+                    <span class="text-gray-900 font-medium">总价: ¥{{ order.total_amount }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 订单底部 -->
+            <div class="p-4 border-t border-gray-100 flex justify-end gap-3">
+              {% if order.status == 0 %}
+                <!-- 待支付状态显示支付和取消按钮 -->
+                <form action="{% url 'cancel_order' order.id %}" method="post" class="inline">
+                  {% csrf_token %}
+                  <button type="submit" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md transition-colors">
+                    取消订单
+                  </button>
+                </form>
+                <form action="{% url 'pay_order' order.id %}" method="post" class="inline">
+                  {% csrf_token %}
+                  <button type="submit" class="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-md transition-colors">
+                    <i class="fa fa-credit-card mr-1"></i> 立即支付
+                  </button>
+                </form>
+              {% elif order.status == 1 %}
+                <!-- 已支付状态 -->
+                <span class="text-green-600 text-sm">
+                  <i class="fa fa-check-circle mr-1"></i>
+                  支付时间: {{ order.pay_time|date:'Y-m-d H:i:s' }}
+                </span>
+              {% elif order.status == 2 %}
+                <!-- 已取消状态 -->
+                <span class="text-gray-600 text-sm">
+                  <i class="fa fa-ban mr-1"></i>
+                  取消时间: {{ order.cancel_time|date:'Y-m-d H:i:s' }}
+                </span>
+              {% elif order.status == 3 %}
+                <!-- 已完成状态 -->
+                <span class="text-blue-600 text-sm">
+                  <i class="fa fa-check-circle mr-1"></i>
+                  订单已完成
+                </span>
+              {% endif %}
+            </div>
+          </div>
+          {% endwith %}
+        {% endfor %}
+      </div>
+    {% else %}
+      <!-- 空订单提示 -->
+      <div class="text-center py-16 bg-white rounded-xl shadow-md">
+        <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <i class="fa fa-file-text-o text-gray-400 text-4xl"></i>
+        </div>
+        <h3 class="text-xl font-medium text-gray-900 mb-2">暂无订单</h3>
+        <p class="text-gray-500 mb-6">快去选购心仪的商品吧！</p>
+        <a href="{% url 'index' %}" class="inline-flex items-center px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-md transition-colors">
+          <i class="fa fa-shopping-bag mr-2"></i>
+          去秒杀
+        </a>
+      </div>
+    {% endif %}
+  </main>
+  
+  <!-- 页脚 -->
+  <footer class="bg-white border-t border-gray-200 py-8 mt-12">
+    <div class="container mx-auto px-4">
+      <div class="text-center text-gray-600 text-sm">
+        <p>© 2024 限时秒杀专场. 保留所有权利.</p>
+      </div>
+    </div>
+  </footer>
+  
+  <!-- 操作确认提示 -->
+  <script>
+    // 为取消订单按钮添加确认提示
+    document.querySelectorAll('form[action*="cancel_order"]').forEach(form => {
+      form.addEventListener('submit', function(e) {
+        if (!confirm('确定要取消该订单吗？')) {
+          e.preventDefault();
+        }
+      });
+    });
+    
+    // 为支付按钮添加确认提示
+    document.querySelectorAll('form[action*="pay_order"]').forEach(form => {
+      form.addEventListener('submit', function(e) {
+        if (!confirm('确定要支付该订单吗？')) {
+          e.preventDefault();
+        }
+      });
+    });
+    
+    // 订单倒计时功能
+    function updateCountdowns() {
+      const countdownElements = document.querySelectorAll('.countdown-timer');
+      
+      countdownElements.forEach(element => {
+        let seconds = parseInt(element.getAttribute('data-seconds'));
+        
+        if (seconds > 0) {
+          // 减少一秒
+          seconds--;
+          element.setAttribute('data-seconds', seconds);
+          
+          // 计算分和秒
+          const minutes = Math.floor(seconds / 60);
+          const remainingSeconds = seconds % 60;
+          
+          // 格式化显示（两位数）
+          element.textContent = `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+        } else {
+          // 倒计时结束
+          element.textContent = '已超时';
+          // 可选：刷新页面以获取最新订单状态
+          // setTimeout(() => location.reload(), 1000);
+        }
+      });
+    }
+    
+    // 初始更新
+    updateCountdowns();
+    
+    // 每秒更新一次
+    setInterval(updateCountdowns, 1000);
+  </script>
+</body>
+</html>

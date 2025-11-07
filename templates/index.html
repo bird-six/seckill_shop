@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>限时秒杀专场 - 超值好物等你来抢</title>
+    {% load static %}
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <!-- 配置Tailwind自定义主题 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#e63946',
+            secondary: '#ffb703',
+            dark: '#1d3557',
+            light: '#f1faee',
+            accent: '#457b9d'
+          },
+          fontFamily: {
+            inter: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .text-shadow {
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      .card-hover {
+        transition: all 0.3s ease;
+      }
+      .card-hover:hover {
+        transform: translateY(-5px);
+      }
+      .countdown-box {
+        @apply bg-dark text-white rounded-md px-2 py-1 inline-block text-center min-w-[2rem];
+      }
+      .stock-high {
+        @apply bg-green-100 text-green-800;
+      }
+      .stock-medium {
+        @apply bg-yellow-100 text-yellow-800;
+      }
+      .stock-low {
+        @apply bg-red-100 text-red-800;
+      }
+    }
+  </style>
+</head>
+<body class="font-inter bg-gray-50 text-dark">
+  <!-- 顶部导航 -->
+  <header class="sticky top-0 z-50 bg-white shadow-md transition-all duration-300">
+    <div class="container mx-auto px-4">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center">
+          <a href="#" class="text-primary font-bold text-2xl flex items-center">
+            <span>限时秒杀专场</span>
+          </a>
+        </div>
+          
+        
+        <!-- 用户功能区 -->
+        <div class="flex items-center space-x-4">
+          <a href="#" class="text-dark hover:text-primary transition-colors">
+            <i class="fa fa-user text-lg"></i>
+          </a>
+          <a href="{% url 'order_list' %}" class="text-dark hover:text-primary transition-colors">
+            <i class="fa fa-file-text-o text-lg"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+  
+  <!-- 秒杀活动头部 -->
+  <section class="bg-gradient-to-r from-primary to-red-600 text-white py-8 md:py-12">
+    <div class="container mx-auto px-4">
+      <div class="text-center">
+        <h1 class="text-[clamp(1.8rem,5vw,3rem)] font-bold mb-4 text-shadow">限时秒杀专场</h1>
+        <p class="text-lg md:text-xl mb-6 opacity-90">每日多个场次，超值好物限时抢</p>
+        
+        <!-- 场次时间选择 -->
+        <div class="flex flex-wrap justify-center gap-3 mb-8">    
+            
+          {% for slot in time_slots %}
+            <button class="slot-btn 
+            {% if slot == selected_slot %}bg-white text-primary px-4 py-2 rounded-full font-medium shadow-md{% else %}bg-transparent hover:bg-white/20 px-4 py-2 rounded-full font-medium transition-colors{% endif %}" 
+                    data-slot="{{ slot }}">
+              {{ slot }}:00场
+            </button>
+          {% endfor %}
+          
+        </div>
+        
+        <!-- 本场结束倒计时 -->
+        <div class="bg-white/20 backdrop-blur-sm inline-block p-3 rounded-lg">
+          <p class="text-lg mb-2">本场结束倒计时</p>
+          <div class="flex gap-2 justify-center">
+            <div id="session-hours" class="countdown-box">02</div>
+            <span class="text-xl font-bold">:</span>
+            <div id="session-minutes" class="countdown-box">45</div>
+            <span class="text-xl font-bold">:</span>
+            <div id="session-seconds" class="countdown-box">18</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- 主要内容区 -->
+  <main class="container mx-auto px-4 py-8 md:py-12">
+    <!-- 商品网格 -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="productsContainer">
+      <!-- 商品卡片1 -->
+      {% for seckill_product in seckill_products %}
+      <div class="bg-white rounded-xl overflow-hidden shadow-md card-hover" data-start-time="{{ seckill_product.seckill_start_time|date:'H' }}" data-end-time="{{ seckill_product.seckill_end_time|date:'H' }}">
+        <div class="relative">
+          <img src="{% static seckill_product.image %}" alt="{{ seckill_product.name }}" class="w-full h-48 object-cover">
+          <div class="absolute top-2 left-2 bg-primary text-white text-sm px-2 py-1 rounded">
+            秒杀
+          </div>
+          <!-- 商品倒计时 -->
+          {% if seckill_product.status == 1 %}
+            <div class="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-sm p-2">
+                <span>剩余时间:</span>
+                <div class="inline-flex gap-1 ml-1 countdown-timer" data-end-time="{{ seckill_product.seckill_end_time|date:'U' }}">
+                    <span class="bg-white/20 px-1 rounded hours">00</span>:
+                    <span class="bg-white/20 px-1 rounded minutes">00</span>:
+                    <span class="bg-white/20 px-1 rounded seconds">00</span>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        <div class="p-4">
+          <h3 class="font-medium text-gray-800 mb-2 line-clamp-2 h-12">{{ seckill_product.name }}：{{ seckill_product.id }}</h3>
+          <div class="flex items-center mb-3">
+            <span class="text-primary font-bold text-xl">¥{{ seckill_product.seckill_price }}</span>
+            <span class="text-gray-400 line-through text-sm ml-2">¥{{ seckill_product.base_price }}</span>
+              
+            <span class="ml-auto text-xs px-2 py-1 rounded-full flex items-center justify-center
+              {% if seckill_product.sold_percentage < 80 %}
+                stock-high
+              {% elif seckill_product.sold_percentage < 100 %}
+                stock-medium
+              {% else %}
+                stock-low
+              {% endif %}">
+              {% if seckill_product.sold_percentage < 80 %}
+                    库存充足
+                  {% elif seckill_product.sold_percentage < 100 %}
+                    即将买完
+                  {% else %}
+                    已售罄
+                  {% endif %}
+            </span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-2 mb-3">
+            <div class="bg-primary h-2 rounded-full" style="width: {{ seckill_product.sold_percentage }}%"></div>
+          </div>
+          <p class="text-sm text-gray-500 mb-4">已售{{ seckill_product.sold_percentage }}% · 剩余{{ seckill_product.stock }}件</p>
+            
+           {% if seckill_product.status == 1 %}
+            <form action="{% url 'buy' seckill_product.id %}" method="post" class="w-full">
+              {% csrf_token %}
+              <input type="hidden" name="product_id" value="{{ seckill_product.id }}">
+              <button type="submit" class="w-full bg-primary hover:bg-red-600 text-white py-2 rounded-lg transition-colors block text-center">
+                立即抢购
+              </button>
+            </form>
+          {% else %}
+            <button class="w-full bg-gray-400 text-white py-2 rounded-lg cursor-not-allowed" disabled>
+              {% if seckill_product.status == 0 %}未开始{% else %}已结束{% endif %}
+            </button>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    
+    </div>
+  </main>
+
+</body>
+</html>
+
+  <script>
+    
+    // 页面加载完成后初始化各功能
+    document.addEventListener('DOMContentLoaded', function() {
+      // 初始化商品倒计时
+      initCountdowns();
+      // 初始化场次选择
+      initTimeSlots();
+      // 初始化场次结束倒计时
+      initSessionCountdown();
+    });
+    
+    // 初始化所有商品倒计时器
+function initCountdowns() {
+    // 清除已存在的定时器，避免重复执行
+    document.querySelectorAll('.countdown-timer').forEach(timer => {
+        const intervalId = timer.getAttribute('data-interval-id');
+        if (intervalId) {
+            clearInterval(intervalId);
+        }
+    });
+
+    // 为每个倒计时器初始化
+    document.querySelectorAll('.countdown-timer').forEach(timer => {
+        // 获取结束时间（Unix时间戳，转换为毫秒）
+        const endTime = parseInt(timer.getAttribute('data-end-time')) * 1000;
+        const hoursEl = timer.querySelector('.hours');
+        const minutesEl = timer.querySelector('.minutes');
+        const secondsEl = timer.querySelector('.seconds');
+        const productCard = timer.closest('.card-hover');
+        
+        // 更新倒计时显示
+        function updateCountdown() {
+            const now = Date.now();
+            const remaining = endTime - now;
+
+            // 倒计时结束
+            if (remaining <= 0) {
+                hoursEl.textContent = '00';
+                minutesEl.textContent = '00';
+                secondsEl.textContent = '00';
+                
+                // 更新商品状态为已结束
+                if (productCard) {
+                    const buyBtn = productCard.querySelector('button');
+                    if (buyBtn) {
+                        buyBtn.disabled = true;
+                        buyBtn.textContent = '已结束';
+                        buyBtn.classList.remove('bg-primary', 'hover:bg-red-600');
+                        buyBtn.classList.add('bg-gray-400');
+                    }
+                }
+                
+                // 清除定时器
+                const intervalId = timer.getAttribute('data-interval-id');
+                if (intervalId) {
+                    clearInterval(intervalId);
+                }
+                return;
+            }
+
+            // 计算剩余时间
+            const hours = Math.floor(remaining / (1000 * 60 * 60));
+            const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+
+            // 格式化显示（确保两位数）
+            hoursEl.textContent = hours.toString().padStart(2, '0');
+            minutesEl.textContent = minutes.toString().padStart(2, '0');
+            secondsEl.textContent = seconds.toString().padStart(2, '0');
+        }
+
+        // 立即执行一次
+        updateCountdown();
+        
+        // 每秒更新一次，并存储定时器ID以便后续清除
+        const intervalId = setInterval(updateCountdown, 1000);
+        timer.setAttribute('data-interval-id', intervalId);
+    });
+}
+    
+    // 初始化场次选择功能
+    function initTimeSlots() {
+      // 获取所有场次按钮
+      const slotButtons = document.querySelectorAll('.slot-btn');
+      const productsContainer = document.getElementById('productsContainer');
+      
+      // 为每个场次按钮添加点击事件
+      slotButtons.forEach(button => {
+        button.addEventListener('click', function() {
+          const slot = this.getAttribute('data-slot');
+          
+          // 更新按钮状态
+          slotButtons.forEach(btn => {
+            btn.classList.remove('bg-white', 'text-primary', 'shadow-md');
+            btn.classList.add('bg-transparent', 'hover:bg-white/20');
+          });
+          this.classList.remove('bg-transparent', 'hover:bg-white/20');
+          this.classList.add('bg-white', 'text-primary', 'shadow-md');
+          
+          // 显示加载状态
+          productsContainer.innerHTML = '<div class="col-span-full text-center py-12">' +
+            '<i class="fa fa-spinner fa-spin text-primary text-3xl mb-4"></i>' +
+            '<p class="text-gray-600">加载中...</p></div>';
+          
+          // 发送请求获取指定场次的商品
+          fetch(`/?slot=${slot}`)
+            .then(response => response.text())
+            .then(html => {
+              // 解析返回的HTML，提取商品列表部分
+              const parser = new DOMParser();
+              const doc = parser.parseFromString(html, 'text/html');
+              const newProductsHtml = doc.getElementById('productsContainer').innerHTML;
+              
+              // 更新商品列表
+              productsContainer.innerHTML = newProductsHtml;
+              
+              // 重新初始化新商品的倒计时
+              initCountdowns();
+              
+              // 重新初始化场次倒计时
+              initSessionCountdown();
+            })
+            .catch(error => {
+              console.error('加载商品失败:', error);
+              productsContainer.innerHTML = '<div class="col-span-full text-center py-12">' +
+                '<i class="fa fa-exclamation-circle text-red-500 text-3xl mb-4"></i>' +
+                '<p class="text-gray-600">加载失败，请重试</p></div>';
+            });
+        });
+      });
+    }
+    
+    /**
+     * 场次结束倒计时函数
+     * 每场持续两小时，根据当前选中的场次计算剩余时间
+     */
+    function initSessionCountdown() {
+      // 清除已存在的定时器，避免重复执行
+      if (window.sessionCountdownInterval) {
+        clearInterval(window.sessionCountdownInterval);
+        window.sessionCountdownInterval = null;
+      }
+      
+      // 获取倒计时元素并添加ID（如果没有）
+      const countdownElements = document.querySelectorAll('.countdown-box');
+      if (countdownElements.length >= 3) {
+        countdownElements[0].id = 'session-hours';
+        countdownElements[1].id = 'session-minutes';
+        countdownElements[2].id = 'session-seconds';
+      }
+      
+      // 获取倒计时元素
+      const hoursElement = document.getElementById('session-hours');
+      const minutesElement = document.getElementById('session-minutes');
+      const secondsElement = document.getElementById('session-seconds');
+      
+      // 如果元素不存在，退出函数
+      if (!hoursElement || !minutesElement || !secondsElement) {
+        console.warn('场次倒计时元素不存在');
+        return;
+      }
+      
+      // 获取当前选中的场次
+      const selectedSlotButton = document.querySelector('.slot-btn.bg-white');
+      if (!selectedSlotButton) {
+        // 如果没有选中的场次，重置显示
+        updateCountdownDisplay('00', '00', '00');
+        return;
+      }
+      
+      // 获取场次小时数
+      const slotHour = parseInt(selectedSlotButton.getAttribute('data-slot'));
+      const now = new Date();
+      
+      // 创建场次开始时间（当天的指定小时）
+      const startTime = new Date(now);
+      startTime.setHours(slotHour, 0, 0, 0);
+      
+      // 创建场次结束时间（开始时间 + 2小时）
+      const endTime = new Date(startTime);
+      endTime.setHours(startTime.getHours() + 2);
+      
+      // 更新倒计时显示的辅助函数
+      function updateCountdownDisplay(hours, minutes, seconds) {
+        hoursElement.textContent = hours;
+        minutesElement.textContent = minutes;
+        secondsElement.textContent = seconds;
+      }
+      
+      // 核心倒计时更新函数
+      function updateSessionCountdown() {
+        const currentTime = new Date();
+        const remaining = endTime - currentTime;
+        
+        // 检查场次是否未开始或已结束
+        const isBeforeSession = currentTime < startTime;
+        const isAfterSession = remaining <= 0;
+        
+        if (isBeforeSession || isAfterSession) {
+          // 场次未开始或已结束，显示00:00:00
+          updateCountdownDisplay('00', '00', '00');
+          
+          // 清除定时器
+          if (window.sessionCountdownInterval) {
+            clearInterval(window.sessionCountdownInterval);
+            window.sessionCountdownInterval = null;
+          }
+          return;
+        }
+        
+        // 计算剩余时间
+        const hours = Math.floor(remaining / (1000 * 60 * 60));
+        const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((remaining % (1000 * 60)) / 1000);
+        
+        // 格式化显示（确保两位数）
+        const formattedHours = hours.toString().padStart(2, '0');
+        const formattedMinutes = minutes.toString().padStart(2, '0');
+        const formattedSeconds = seconds.toString().padStart(2, '0');
+        
+        // 更新显示
+        updateCountdownDisplay(formattedHours, formattedMinutes, formattedSeconds);
+      }
+      
+      // 立即执行一次倒计时更新
+      updateSessionCountdown();
+      
+      // 设置每秒更新一次的定时器
+      window.sessionCountdownInterval = setInterval(updateSessionCountdown, 1000);
+    }
+    
+  </script>
