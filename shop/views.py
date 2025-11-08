@@ -98,7 +98,6 @@ def index(request):
             product.total_stock = product.stock  # 初始库存等于当前库存
             product.sold_percentage = 0  # 初始已售百分比为0
             seckill_products.append(product)
-            print('123',seckill_products)
             # 缓存商品信息到Redis
             product_key = f"seckill:product:{product.id}"
             product_data = {
@@ -134,7 +133,6 @@ def index(request):
     })
 
 @sliding_window_limit(threshold=5)
-@csrf_exempt
 def buy(request, product_id):
     if request.method != "POST":
         return render(request, "result.html", {"code": 405, "msg": "方法不允许"})

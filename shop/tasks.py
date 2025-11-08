@@ -1,5 +1,4 @@
 import json
-
 import django_redis
 from celery import shared_task
 from datetime import datetime, timedelta
