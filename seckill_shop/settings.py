@@ -79,7 +79,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'seckill_shop',
         'USER': 'root',
-        'PASSWORD': 'yang123.',
+        'PASSWORD': '123456',
         'HOST': 'localhost',
         'PORT': '3306',
         'OPTIONS': {
@@ -165,8 +165,8 @@ CELERY_BROKER_CONNECTION_MAX_RETRIES = 10  # 最大重试次数
 # 支付宝沙箱配置
 ALIPAY_SETTINGS = {
     "appid": "9021000155669214",
-    "app_return_url": "http://q56b89bf.natappfree.cc/result/",    # 同步回调地址
-    "app_notify_url": "http://q56b89bf.natappfree.cc/alipay/notify/",  # 异步回调地址
+    "app_return_url": "http://公网地址/result/",    # 同步回调地址
+    "app_notify_url": "http://公网地址/alipay/notify/",  # 异步回调地址
     "app_private_key_path": os.path.join(BASE_DIR, "keys/app_private_key.pem"),  # 应用私钥路径
     "alipay_public_key_path": os.path.join(BASE_DIR, "keys/alipay_public_key.pem"),  # 支付宝公钥路径
     "sign_type": "RSA2",  # 签名方式
